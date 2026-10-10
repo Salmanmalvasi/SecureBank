@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="{{ csrf_token() }}">
+<title>{% block title %}SecureBank{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>SecureBank</h1>
+  {% if session.get('user') %}
+  <nav>
+    <a href="{{ url_for('dashboard') }}">Account</a>
+    <a href="{{ url_for('transfer') }}">Transfer</a>
+    <a href="{{ url_for('history') }}">Statement</a>
+    <a href="{{ url_for('security') }}">Security</a>
+    <a href="{{ url_for('logout') }}">Log out</a>
+  </nav>
+  {% endif %}
+</header>
+{% block body %}{% endblock %}
+</body>
+</html>

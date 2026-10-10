@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Account - SecureBank{% endblock %}
+{% block body %}
+<main class="wide">
+  {% include "_flash.html" %}
+  <div class="row">
+    <div class="box">
+      <h2>Welcome, {{ user.name }}</h2>
+      <div class="note">Savings account {{ user.account }}</div>
+      <p class="balance">&#8377; {{ user.balance|money }}</p>
+    </div>
+    <div class="box">
+      <h2>Last 30 days</h2>
+      <dl>
+        <dt>Money in</dt><dd class="pos">{{ inflow|money }}</dd>
+        <dt>Money out</dt><dd class="neg">{{ outflow|money }}</dd>
+      </dl>
+      <p class="note"><a href="{{ url_for('transfer') }}">Make a transfer</a></p>
+    </div>
+  </div>
+  <div class="box">
+    <h2>Recent transactions</h2>
+    <table>
+      <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+      {% for r in recent %}
+      <tr>
+        <td>{{ r.ts|dt }}</td><td>{{ r.description }}</td>
+        <td class="amt {{ 'neg' if r.amount < 0 else 'pos' }}">{{ r.amount|money }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p class="note"><a href="{{ url_for('history') }}">Full statement</a></p>
+  </div>
+</main>
+{% endblock %}

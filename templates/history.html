@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Statement - SecureBank{% endblock %}
+{% block body %}
+<main class="wide">
+  {% include "_flash.html" %}
+  <div class="box">
+    <h2>Statement</h2>
+    <form class="filters" method="get">
+      <select name="type">
+        <option value="all" {{ 'selected' if kind=='all' }}>All</option>
+        <option value="credit" {{ 'selected' if kind=='credit' }}>Money in</option>
+        <option value="debit" {{ 'selected' if kind=='debit' }}>Money out</option>
+      </select>
+      <input name="q" value="{{ q }}" placeholder="Search description">
+      <button type="submit">Filter</button>
+    </form>
+    <table>
+      <tr><th>Date</th><th>Description</th><th class="amt">Amount</th><th class="amt">Balance</th></tr>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.ts|dt }}</td><td>{{ r.description }}</td>
+        <td class="amt {{ 'neg' if r.amount < 0 else 'pos' }}">{{ r.amount|money }}</td>
+        <td class="amt">{{ r.balance_after|money }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No transactions found.</td></tr>
+      {% endfor %}
+    </table>
+    <div class="pager">
+      {% if page > 1 %}<a href="{{ url_for('history', type=kind, q=q, page=page-1) }}">&laquo; Newer</a>{% endif %}
+      Page {{ page }} of {{ pages }}
+      {% if page < pages %}<a href="{{ url_for('history', type=kind, q=q, page=page+1) }}">Older &raquo;</a>{% endif %}
+      &nbsp;&middot;&nbsp; <a href="{{ url_for('history_csv') }}">Download CSV</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

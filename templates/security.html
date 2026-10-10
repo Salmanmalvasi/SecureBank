@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Security - SecureBank{% endblock %}
+{% block body %}
+<main class="wide">
+  <div class="box">
+    <h2>Your OTP token</h2>
+    <dl>
+      <dt>Device ID</dt><dd>{{ dev.device_id }}</dd>
+      <dt>Last used</dt><dd>{{ dev.last_seen|dt if dev.last_seen else 'Never' }}</dd>
+      <dt>Code window</dt><dd>30 seconds, one use per code</dd>
+      <dt>Algorithm</dt><dd>HKDF-SHA256 key, HMAC-SHA256, 6 digits</dd>
+    </dl>
+  </div>
+  <div class="box">
+    <h2>Recent security activity</h2>
+    <table>
+      <tr><th>Time</th><th>Event</th><th>Detail</th><th>IP</th></tr>
+      {% for e in log %}
+      <tr><td>{{ e.ts|dt }}</td><td>{{ e.event }}</td><td>{{ e.detail }}</td><td>{{ e.ip }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</main>
+{% endblock %}

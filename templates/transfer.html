@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Transfer - SecureBank{% endblock %}
+{% block body %}
+<main>
+  <div class="box">
+    <h2>Transfer money</h2>
+    <div class="note">Available balance: &#8377; {{ user.balance|money }}</div>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <label for="to">To account number</label>
+      <input id="to" name="to" required autocomplete="off">
+      <label for="amount">Amount (&#8377;)</label>
+      <input id="amount" name="amount" type="number" step="0.01" min="0.01" required>
+      <label for="note">Note (optional)</label>
+      <input id="note" name="note" maxlength="40">
+      <button type="submit">Continue</button>
+    </form>
+    <p class="note">Transfers of &#8377; {{ "{:,.0f}".format(limit) }} or more need a fresh code from your token.</p>
+  </div>
+</main>
+{% endblock %}

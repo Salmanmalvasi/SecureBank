@@ -1,0 +1,41 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f4f4; color: #222; }
+header { background: #1f3a5f; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+header a { color: #fff; font-size: 14px; }
+header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+main { max-width: 440px; margin: 40px auto; padding: 0 16px; }
+main.wide { max-width: 720px; }
+.box { background: #fff; border: 1px solid #ccc; padding: 24px; margin-bottom: 20px; }
+h2 { margin: 0 0 16px; font-size: 18px; }
+label { display: block; margin: 12px 0 4px; font-size: 14px; }
+input { width: 100%; padding: 9px; border: 1px solid #999; font-size: 15px; }
+button { margin-top: 18px; width: 100%; padding: 10px; background: #1f3a5f; color: #fff; border: 0; font-size: 15px; cursor: pointer; }
+button:hover { background: #172c49; }
+.error { background: #fdecea; border: 1px solid #e0a8a3; color: #8a1f17; padding: 8px 10px; margin-bottom: 8px; font-size: 14px; }
+.note { font-size: 13px; color: #666; margin-top: 14px; }
+.balance { font-size: 28px; margin: 4px 0 0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+td.amt, th.amt { text-align: right; }
+.neg { color: #a32117; }
+.pos { color: #1b6e2b; }
+.otp-input { letter-spacing: 6px; font-size: 20px; text-align: center; }
+nav a { color: #fff; margin-left: 18px; font-size: 14px; text-decoration: none; }
+nav a:hover { text-decoration: underline; }
+.flash { background: #e8f3e8; border: 1px solid #a9cfa9; color: #1b4d1b; padding: 8px 12px; margin-bottom: 14px; font-size: 14px; }
+.row { display: flex; gap: 16px; }
+.row .box { flex: 1; margin-bottom: 20px; }
+button.secondary { width: auto; margin: 8px 8px 0 0; padding: 7px 12px; background: #fff; color: #1f3a5f; border: 1px solid #1f3a5f; font-size: 13px; }
+button.secondary:disabled { color: #999; border-color: #bbb; cursor: default; }
+hr { border: 0; border-top: 1px solid #ddd; margin: 18px 0 8px; }
+.filters { display: flex; gap: 8px; margin-bottom: 12px; }
+.filters input, .filters select { width: auto; padding: 7px; }
+.filters button { width: auto; margin: 0; padding: 7px 14px; }
+.pager { margin-top: 12px; font-size: 14px; }
+dl { margin: 0; font-size: 14px; }
+dt { color: #666; float: left; width: 130px; clear: left; padding: 3px 0; }
+dd { margin: 0 0 0 130px; padding: 3px 0; }
+main.wide { max-width: 760px; }
+.linkbtn { background: none; color: #1f3a5f; border: 0; width: auto; margin: 0; padding: 0; text-decoration: underline; font-size: 13px; }
+.linkbtn:hover { background: none; }
+@media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }

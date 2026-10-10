@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Confirm transfer - SecureBank{% endblock %}
+{% block body %}
+<main>
+  <div class="box">
+    <h2>Confirm transfer</h2>
+    <dl>
+      <dt>To account</dt><dd>{{ t.to }}</dd>
+      <dt>Amount</dt><dd>&#8377; {{ t.amount|money }}</dd>
+      {% if t.note %}<dt>Note</dt><dd>{{ t.note }}</dd>{% endif %}
+    </dl>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post" id="otp-form">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <label for="otp">Code from your token ({{ device }})</label>
+      <input id="otp" name="otp" class="otp-input" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required autofocus autocomplete="off">
+      <button type="submit">Confirm transfer</button>
+    </form>
+    <p class="note">You used a code to log in, so wait for the next one (up to 30 seconds). A code works only once.</p>
+    {% include "_token.html" %}
+    <form method="post" action="{{ url_for('transfer_cancel') }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button class="linkbtn" type="submit">Cancel transfer</button>
+    </form>
+  </div>
+</main>
+{% endblock %}
