@@ -6,6 +6,8 @@ __pycache__/
 # Database
 *.db
 *.sqlite3
+secret.key
+*.key
 
 # Environments
 .env
