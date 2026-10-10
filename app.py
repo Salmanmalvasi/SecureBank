@@ -385,5 +385,13 @@ def api_poll():
 
 
 if __name__ == "__main__":
+    import socket
+
+    def is_port_free(p):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(("127.0.0.1", p)) != 0
+
+    port = int(os.environ.get("PORT", 5000 if is_port_free(5000) else 5001))
     # 0.0.0.0 so the ESP32 on the same Wi-Fi can reach the server
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    print(f" * Running SecureBank on http://127.0.0.1:{port} (host 0.0.0.0)")
+    app.run(host="0.0.0.0", port=port, debug=False)
