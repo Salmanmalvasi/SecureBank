@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ r.ref }} - SecureBank{% endblock %}
+{% block body %}
+<main>
+  <div class="no-print">{% include "_flash.html" %}</div>
+  <div class="box receipt">
+    <div class="receipt-head">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+      <div><h2 style="margin:0">Transfer receipt</h2><span class="muted-sm">SecureBank</span></div>
+    </div>
+    <p class="receipt-amount">&#8377; {{ r.amount|money }}</p>
+    <p class="receipt-status"><span class="badge badge-success">Transfer confirmed</span></p>
+    <dl class="kv">
+      <dt>Reference</dt><dd class="mono">{{ r.ref }}</dd>
+      <dt>Date</dt><dd>{{ r.ts|dt }}</dd>
+      <dt>From account</dt><dd>{{ user.account }} ({{ user.name }})</dd>
+      <dt>To account</dt><dd>{{ r.to }}{% if r.nickname %} ({{ r.nickname }}){% endif %}</dd>
+      {% if r.note %}<dt>Note</dt><dd>{{ r.note }}</dd>{% endif %}
+      <dt>Balance after</dt><dd>&#8377; {{ r.balance_after|money }}</dd>
+    </dl>
+  </div>
+  <div class="btn-row no-print">
+    <button type="button" class="secondary" onclick="window.print()" style="flex:1 1 140px">Print receipt</button>
+    <a class="btn btn-secondary" style="flex:1 1 140px" href="{{ url_for('receipt_pdf', tid=r.id) }}">Download PDF</a>
+    <a class="btn btn-primary" style="flex:1 1 140px" href="{{ url_for('dashboard') }}">Back to account</a>
+  </div>
+</main>
+{% endblock %}

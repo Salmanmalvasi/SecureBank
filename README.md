@@ -41,3 +41,18 @@ security page with token info and activity log, CSRF tokens, 5-minute sessions, 
 replay protection (each code works once), +/-1 step clock-drift tolerance, `/api/push` for the device.
 
 Demo only: for a real bank use HTTPS, a production server and secure key storage (e.g. the planned EEPROM/secure element).
+
+## New in this version (frontend redesign + extras)
+- Redesigned UI (design system in `static/style.css`).
+- Session countdown in the header with a "Stay signed in" prompt in the last minute (`/session/ping`).
+- Last sign-in alert (time + IP) and failed-attempt count on the dashboard.
+- Payees (`/payees`): save recipients with a nickname; quick-pick chips on the Transfer page.
+- Transfer limits: Rs. 1,00,000 per rolling 24 h; transfers above Rs. 10,000 to a recipient you have never paid
+  need them saved as a payee for 10 minutes first (constants at the top of `app.py`).
+- Transfer receipts (`/receipt/<id>`) with Print and PDF download; the confirm step now lands on the receipt.
+- Statement date range (`from` / `to`) and PDF export (`/history.pdf`); CSV export is unchanged.
+- Monthly money in/out summary chart on the dashboard (real data).
+- Token health card on the Security page (failed codes, lockouts, last use).
+- Change password (`/change-password`) requires the current password and a fresh token OTP.
+- The login-page demo credentials hint is hidden by default. Show it with `SECUREBANK_DEMO=1` (e.g. `set SECUREBANK_DEMO=1` on Windows before `python app.py`).
+- New dependency: `reportlab` (`pip install -r requirements.txt`).

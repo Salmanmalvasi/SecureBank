@@ -2,18 +2,35 @@
 {% block title %}Verify - SecureBank{% endblock %}
 {% block body %}
 <main>
-  <div class="box">
-    <h2>Enter OTP</h2>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="auth-brand">
+    <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <h2>Verify it's you</h2>
+    <p>Enter the code from your hardware token to finish signing in.</p>
+  </div>
+  <div class="box auth-card">
+    <h2 class="sr-only">Enter OTP</h2>
+    <div class="steps" aria-label="Step 2 of 2">
+      <span class="step done"><span class="dot">&#10003;</span>Password</span>
+      <span class="bar"></span>
+      <span class="step active"><span class="dot">2</span>OTP token</span>
+    </div>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
     <form method="post" id="otp-form">
       <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-      <label for="otp">6-digit code from your token ({{ device }})</label>
-      <input id="otp" name="otp" class="otp-input" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required autofocus autocomplete="off">
-      <button type="submit">Verify and log in</button>
+      <label for="otp" class="otp-label" style="margin-top:0">6-digit code from your token ({{ device }})</label>
+      <input id="otp" name="otp" class="otp-input" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required autofocus autocomplete="off" placeholder="------">
+      <div class="btn-row">
+        <button type="button" id="get-otp" class="secondary" disabled style="margin-top:var(--space-4)">Get Current OTP</button>
+        <button type="submit" style="margin-top:var(--space-4)">Confirm OTP and Log In</button>
+      </div>
     </form>
-    <p class="note">Press the button on your token. The code changes every 30 seconds and works only once.</p>
+    <ol class="instructions">
+      <li>Connect your USB token below.</li>
+      <li>Click &ldquo;Get Current OTP&rdquo;, then &ldquo;Confirm OTP and Log In&rdquo;.</li>
+      <li>The code changes every 30 seconds and works only once.</li>
+    </ol>
     {% include "_token.html" %}
-    <p class="note"><a href="{{ url_for('logout') }}">Cancel</a></p>
+    <p class="cancel-link"><a href="{{ url_for('logout') }}">Cancel</a></p>
   </div>
 </main>
 {% endblock %}

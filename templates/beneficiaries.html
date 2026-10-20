@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Payees - SecureBank{% endblock %}
+{% block body %}
+<main class="wide">
+  {% include "_flash.html" %}
+  <div class="page-head">
+    <h2>Payees</h2>
+    <p>Save recipients with a nickname so you don't retype account numbers.</p>
+  </div>
+  <div class="grid-2">
+    <div class="box">
+      <h2>Add a payee</h2>
+      {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+      <form method="post">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label for="nickname" style="margin-top:0">Nickname</label>
+        <input id="nickname" name="nickname" maxlength="30" required autocomplete="off" placeholder="e.g. Landlord">
+        <label for="to">Account number</label>
+        <input id="to" name="to" required autocomplete="off" inputmode="numeric" placeholder="Recipient account number">
+        <button type="submit">Save payee</button>
+      </form>
+      <p class="note">Transfers above &#8377; {{ '{:,.0f}'.format(new_limit) }} to a new recipient unlock {{ new_delay }} minutes after the payee is saved. Smaller transfers are not delayed.</p>
+    </div>
+    <div class="box">
+      <h2>Saved payees</h2>
+      {% if payees %}
+      <ul class="payee-list">
+        {% for p in payees %}
+        <li>
+          <div class="payee-main">
+            <strong>{{ p.nickname }}</strong>
+            <span class="mono">{{ p.to }}</span>
+          </div>
+          <div class="payee-actions">
+            {% if p.ready %}<span class="badge badge-success">Ready</span>
+            {% else %}<span class="badge badge-warning">Large transfers in {{ p.minutes }} min</span>{% endif %}
+            <form method="post" action="{{ url_for('beneficiary_delete', bid=p.id) }}">
+              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+              <button class="linkbtn" type="submit" aria-label="Remove {{ p.nickname }}">Remove</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty-state" style="padding:var(--space-5) 0 !important"><strong>No saved payees yet</strong>Add one to pick it quickly on the Transfer page.</div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -2,23 +2,35 @@
 {% block title %}Confirm transfer - SecureBank{% endblock %}
 {% block body %}
 <main>
-  <div class="box">
+  <div class="page-head">
     <h2>Confirm transfer</h2>
-    <dl>
-      <dt>To account</dt><dd>{{ t.to }}</dd>
-      <dt>Amount</dt><dd>&#8377; {{ t.amount|money }}</dd>
-      {% if t.note %}<dt>Note</dt><dd>{{ t.note }}</dd>{% endif %}
-    </dl>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <p>Review the details, then verify with your token.</p>
+  </div>
+  <div class="box">
+    <div class="summary">
+      <dl class="kv">
+        <dt>To account</dt><dd>{{ t.to }}</dd>
+        <dt>Amount</dt><dd class="big">&#8377; {{ t.amount|money }}</dd>
+        {% if t.note %}<dt>Note</dt><dd>{{ t.note }}</dd>{% endif %}
+      </dl>
+    </div>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
     <form method="post" id="otp-form">
       <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-      <label for="otp">Code from your token ({{ device }})</label>
-      <input id="otp" name="otp" class="otp-input" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required autofocus autocomplete="off">
-      <button type="submit">Confirm transfer</button>
+      <label for="otp" class="otp-label" style="margin-top:0">Code from your token ({{ device }})</label>
+      <input id="otp" name="otp" class="otp-input" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required autofocus autocomplete="off" placeholder="------">
+      <div class="btn-row">
+        <button type="button" id="get-otp" class="secondary" disabled style="margin-top:var(--space-4)">Get Current OTP</button>
+        <button type="submit" style="margin-top:var(--space-4)">Confirm transfer</button>
+      </div>
     </form>
-    <p class="note">You used a code to log in, so wait for the next one (up to 30 seconds). A code works only once.</p>
+    <ol class="instructions">
+      <li>Connect your USB token below.</li>
+      <li>Click &ldquo;Get Current OTP&rdquo;, then &ldquo;Confirm transfer&rdquo;.</li>
+      <li>The code expires every 30 seconds and can only be used once.</li>
+    </ol>
     {% include "_token.html" %}
-    <form method="post" action="{{ url_for('transfer_cancel') }}">
+    <form method="post" action="{{ url_for('transfer_cancel') }}" class="cancel-link">
       <input type="hidden" name="csrf" value="{{ csrf_token() }}">
       <button class="linkbtn" type="submit">Cancel transfer</button>
     </form>

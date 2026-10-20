@@ -2,23 +2,114 @@
 {% block title %}Security - SecureBank{% endblock %}
 {% block body %}
 <main class="wide">
-  <div class="box">
-    <h2>Your OTP token</h2>
-    <dl>
-      <dt>Device ID</dt><dd>{{ dev.device_id }}</dd>
-      <dt>Last used</dt><dd>{{ dev.last_seen|dt if dev.last_seen else 'Never' }}</dd>
-      <dt>Code window</dt><dd>30 seconds, one use per code</dd>
-      <dt>Algorithm</dt><dd>HKDF-SHA256 key, HMAC-SHA256, 6 digits</dd>
-    </dl>
+  {% include "_flash.html" %}
+  <div class="dash-head">
+    <div class="page-head">
+      <h2>Security</h2>
+      <p>Your OTP token, its current status and recent sign-in activity.</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('change_password') }}">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      Change password</a>
   </div>
+
+  <div class="grid-2">
+    <div class="box">
+      <h2>Your OTP token</h2>
+      <dl class="kv">
+        <dt>Device ID</dt>
+        <dd>{{ dev.device_id }}</dd>
+
+        <dt>Last used</dt>
+        <dd>{{ dev.last_seen|dt if dev.last_seen else 'Never' }}</dd>
+
+        <dt>Code window</dt>
+        <dd>30 seconds, one use per code</dd>
+
+        <dt>Algorithm</dt>
+        <dd>HKDF-SHA256 key, HMAC-SHA256, 6 digits</dd>
+      </dl>
+    </div>
+
+    <div class="box">
+      <h2>Device status</h2>
+      <div class="status-list">
+        <div class="status-item">
+          <span class="k">USB connection</span>
+          <strong id="token-connection-status" data-state="disconnected">Not connected</strong>
+        </div>
+        <div class="status-item">
+          <span class="k">Clock status</span>
+          <strong id="token-clock-status" data-state="warning">Needs synchronization</strong>
+        </div>
+      </div>
+      {% include "_token.html" %}
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="card-head">
+      <h2>Token health</h2>
+      <strong class="health-badge" data-state="{{ health.state }}">{{ health.label }}</strong>
+    </div>
+    <div class="status-list">
+      <div class="status-item"><span class="k">Failed codes, last 24 hours</span><strong>{{ health.fail24 }}</strong></div>
+      <div class="status-item"><span class="k">Failed codes, last 7 days</span><strong>{{ health.fail7 }}</strong></div>
+      <div class="status-item"><span class="k">Account lockouts, last 30 days</span><strong>{{ health.locks }}</strong></div>
+      <div class="status-item"><span class="k">Last successful use</span><strong>{{ dev.last_seen|dt if dev.last_seen else 'Never' }}</strong></div>
+    </div>
+    {% if health.fail24 %}<p class="note">If valid codes keep being rejected, connect the token and use <strong>Sync token clock</strong> &mdash; a drifting token clock is the usual cause.</p>{% endif %}
+  </div>
+
+  <div class="box">
+    <h2>Authentication status</h2>
+    {% if auth_status and auth_status.event == 'otp_fail' %}
+      <div class="auth-result fail" role="status">
+        <div>
+          <p><strong class="fail">Failed</strong> &mdash; Incorrect or invalid OTP.</p>
+          <p class="note">Last failed attempt: {{ auth_status.ts|dt }}</p>
+          {% if auth_status.detail %}<p class="note">Reason: {{ auth_status.detail }}</p>{% endif %}
+        </div>
+      </div>
+    {% elif auth_status and auth_status.event == 'login_ok' %}
+      <div class="auth-result ok" role="status">
+        <div>
+          <p><strong class="ok">Successful</strong> &mdash; Login verified successfully.</p>
+          <p class="note">Last successful login: {{ auth_status.ts|dt }}</p>
+        </div>
+      </div>
+    {% else %}
+      <div class="auth-result none"><p>No OTP authentication activity recorded yet.</p></div>
+    {% endif %}
+  </div>
+
   <div class="box">
     <h2>Recent security activity</h2>
+    <div class="table-wrap">
     <table>
-      <tr><th>Time</th><th>Event</th><th>Detail</th><th>IP</th></tr>
+      <thead>
+      <tr>
+        <th>Time</th>
+        <th>Event</th>
+        <th>Detail</th>
+        <th>IP</th>
+      </tr>
+      </thead>
+      <tbody>
       {% for e in log %}
-      <tr><td>{{ e.ts|dt }}</td><td>{{ e.event }}</td><td>{{ e.detail }}</td><td>{{ e.ip }}</td></tr>
+      {% set cls = 'ok' if e.event in ('login_ok', 'password_ok', 'transfer', 'password_changed') else ('fail' if e.event in ('otp_fail', 'password_fail', 'locked', 'password_change_fail') else '') %}
+      <tr>
+        <td class="date">{{ e.ts|dt }}</td>
+        <td><span class="event {{ cls }}">{{ e.event }}</span></td>
+        <td>{{ e.detail }}</td>
+        <td class="ip">{{ e.ip }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty-state"><strong>No activity yet</strong>Security events will appear here.</td></tr>
       {% endfor %}
+      </tbody>
     </table>
+    </div>
   </div>
 </main>
 {% endblock %}

@@ -2,21 +2,48 @@
 {% block title %}Transfer - SecureBank{% endblock %}
 {% block body %}
 <main>
-  <div class="box">
+  <div class="page-head">
     <h2>Transfer money</h2>
-    <div class="note">Available balance: &#8377; {{ user.balance|money }}</div>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <p>Send funds to another account. You will confirm with your hardware token.</p>
+  </div>
+  <div class="box">
+    <div class="summary">
+      <dl class="kv"><dt>Available balance</dt><dd class="big">&#8377; {{ user.balance|money }}</dd>
+        <dt>Daily limit left</dt><dd>&#8377; {{ daily_left|money }}</dd></dl>
+    </div>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
     <form method="post">
       <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-      <label for="to">To account number</label>
-      <input id="to" name="to" required autocomplete="off">
-      <label for="amount">Amount (&#8377;)</label>
-      <input id="amount" name="amount" type="number" step="0.01" min="0.01" required>
-      <label for="note">Note (optional)</label>
-      <input id="note" name="note" maxlength="40">
-      <button type="submit">Continue</button>
+      <div class="form-section">
+        <p class="form-section-title">Transfer details</p>
+        {% if payees %}
+        <p class="form-section-title" style="margin-top:var(--space-3)">Saved payees</p>
+        <div class="chips" id="payee-chips">
+          {% for p in payees %}<button type="button" class="chip" data-account="{{ p.to_account }}">{{ p.nickname }}</button>{% endfor %}
+        </div>
+        {% endif %}
+        <label for="to">To account number</label>
+        <input id="to" name="to" required autocomplete="off" inputmode="numeric" placeholder="Recipient account number">
+        <label for="amount">Amount (&#8377;)</label>
+        <div class="input-prefix">
+          <span aria-hidden="true">&#8377;</span>
+          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-section">
+        <p class="form-section-title">Optional</p>
+        <label for="note" style="margin-top:var(--space-2)">Note <span class="optional">(optional)</span></label>
+        <input id="note" name="note" maxlength="40" placeholder="Add a short note for your records">
+        <span class="hint">Up to 40 characters.</span>
+      </div>
+      <button type="submit">Continue to OTP confirmation</button>
     </form>
-    <p class="note">Transfers of &#8377; {{ "{:,.0f}".format(limit) }} or more need a fresh code from your token.</p>
+    <div class="secure-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      Every transfer requires confirmation with your hardware token, regardless of amount.
+    </div>
+    <p class="note">Transfers above &#8377; {{ '{:,.0f}'.format(new_limit) }} to a new recipient need them saved as a <a href="{{ url_for('beneficiaries') }}">payee</a> for {{ new_delay }} minutes first.</p>
+    <script src="{{ url_for('static', filename='transfer.js') }}"></script>
   </div>
 </main>
 {% endblock %}

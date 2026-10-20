@@ -1,6 +1,12 @@
-<hr>
-<p class="note"><b>Hardware token</b></p>
-<button type="button" id="connect" class="secondary">Connect token (USB)</button>
-<button type="button" id="sync" class="secondary" disabled>Sync token clock</button>
-<p id="tokstatus" class="note">USB: connect, then press the button on the token and the code fills in by itself. Wi-Fi tokens log you in automatically when you press the button.</p>
+<div class="token-panel">
+  <p class="token-panel-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17h2"/></svg>
+    Hardware token
+  </p>
+  <div class="token-controls">
+    <button type="button" id="connect" class="secondary">Connect token (USB)</button>
+    <button type="button" id="sync" class="secondary" disabled>Sync token clock</button>
+  </div>
+  <p id="tokstatus" class="token-status" role="status" aria-live="polite">Connect the token over USB. Once connected, you can request the current OTP or synchronize the token clock.</p>
+</div>
 <script src="{{ url_for('static', filename='token.js') }}"></script>
