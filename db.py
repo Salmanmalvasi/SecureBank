@@ -32,6 +32,9 @@ def init():
     CREATE TABLE IF NOT EXISTS audit(
         id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER, account TEXT,
         event TEXT, detail TEXT, ip TEXT);
+    CREATE TABLE IF NOT EXISTS beneficiaries(
+        id INTEGER PRIMARY KEY AUTOINCREMENT, account TEXT, nickname TEXT,
+        to_account TEXT, created_ts INTEGER, UNIQUE(account, to_account));
     """)
     if d.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
         pw = generate_password_hash("bank123")

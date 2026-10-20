@@ -2,19 +2,33 @@
 {% block title %}Login - SecureBank{% endblock %}
 {% block body %}
 <main>
-  <div class="box">
-    <h2>Net Banking Login</h2>
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="auth-brand">
+    <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <h2>Welcome back</h2>
+    <p>Sign in to your SecureBank net banking account.</p>
+  </div>
+  <div class="box auth-card">
+    <h2 class="sr-only">Net Banking Login</h2>
+    <div class="steps" aria-label="Step 1 of 2">
+      <span class="step active"><span class="dot">1</span>Password</span>
+      <span class="bar"></span>
+      <span class="step"><span class="dot">2</span>OTP token</span>
+    </div>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
     <form method="post">
       <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-      <label for="account">Account number</label>
-      <input id="account" name="account" required autocomplete="off">
+      <label for="account" style="margin-top:0">Account number</label>
+      <input id="account" name="account" required autocomplete="off" placeholder="Enter your account number">
       <label for="password">Password</label>
-      <input id="password" name="password" type="password" required>
+      <input id="password" name="password" type="password" required placeholder="Enter your password">
       <button type="submit">Continue</button>
     </form>
     <p class="note">Step 1 of 2. You will need the code from your OTP token next.</p>
+    <div class="secure-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      Protected by two-step verification with a hardware token
+    </div>
   </div>
-  <p class="note">Demo accounts: 1001234567, 2002345678, 3003456789 &middot; password bank123</p>
+  {% if show_demo_hint %}<p class="note demo-note">Demo accounts: 1001234567, 2002345678, 3003456789 &middot; password bank123</p>{% endif %}
 </main>
 {% endblock %}

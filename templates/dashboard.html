@@ -3,33 +3,100 @@
 {% block body %}
 <main class="wide">
   {% include "_flash.html" %}
-  <div class="row">
-    <div class="box">
-      <h2>Welcome, {{ user.name }}</h2>
-      <div class="note">Savings account {{ user.account }}</div>
-      <p class="balance">&#8377; {{ user.balance|money }}</p>
+  <div class="dash-head">
+    <div class="page-head">
+      <h2>Welcome to SecureBank</h2>
+      <p class="meta">Savings account {{ user.account }}</p>
     </div>
-    <div class="box">
-      <h2>Last 30 days</h2>
-      <dl>
-        <dt>Money in</dt><dd class="pos">{{ inflow|money }}</dd>
-        <dt>Money out</dt><dd class="neg">{{ outflow|money }}</dd>
-      </dl>
-      <p class="note"><a href="{{ url_for('transfer') }}">Make a transfer</a></p>
+    <a class="btn btn-primary" href="{{ url_for('transfer') }}">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h13l-4-4"/><path d="M17 17H4l4 4"/></svg>
+      Make a transfer</a>
+  </div>
+  {% if last_login %}
+  <div class="notice {{ 'warn' if failed_since else 'info' }}" role="status">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    <div>
+      Last sign-in: <strong>{{ last_login.ts|dt }}</strong> from IP <span class="mono">{{ last_login.ip }}</span>.
+      {% if failed_since %}<br><strong>{{ failed_since }} failed sign-in attempt{{ 's' if failed_since != 1 }}</strong> since then. If this wasn't you, <a href="{{ url_for('change_password') }}">change your password</a>.{% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="notice info" role="status">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    <div>This is your first recorded sign-in.</div>
+  </div>
+  {% endif %}
+  <div class="row">
+    <div class="box balance-card">
+      <div>
+        <div class="stat-label">Available balance</div>
+        <p class="balance">&#8377; {{ user.balance|money }}</p>
+      </div>
+      <div class="acct">Savings account {{ user.account }}</div>
+    </div>
+    <div class="box stat-in stat">
+      <div class="stat-label"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>Money in</div>
+      <p class="stat-value pos">&#8377; {{ inflow|money }}</p>
+      <p class="stat-sub">Last 30 days</p>
+    </div>
+    <div class="box stat-out stat">
+      <div class="stat-label"><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>Money out</div>
+      <p class="stat-value neg">&#8377; {{ outflow|money }}</p>
+      <p class="stat-sub">Last 30 days</p>
     </div>
   </div>
   <div class="box">
-    <h2>Recent transactions</h2>
+    <div class="card-head">
+      <h2>Monthly summary</h2>
+      <span class="muted-sm">Last 6 months &middot; &#8377; in and out</span>
+    </div>
+    <div class="chart" role="img" aria-label="Monthly money in and money out for the last six months">
+      {% for m in monthly %}
+      <div class="chart-col">
+        <div class="chart-bars">
+          <div class="bar bar-in" style="height: {{ m.in_pct }}%" title="Money in: &#8377; {{ m.in|money }}"></div>
+          <div class="bar bar-out" style="height: {{ m.out_pct }}%" title="Money out: &#8377; {{ m.out|money }}"></div>
+        </div>
+        <div class="chart-label">{{ m.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend"><span><i class="sw in"></i>Money in</span><span><i class="sw out"></i>Money out</span></div>
+    <div class="table-wrap">
     <table>
-      <tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr>
+      <thead><tr><th>Month</th><th class="amt">Money in</th><th class="amt">Money out</th></tr></thead>
+      <tbody>
+      {% for m in monthly|reverse if m.in or m.out %}
+      <tr><td>{{ m.label }}</td><td class="amt pos">{{ m.in|money }}</td><td class="amt neg">{{ m.out|money }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="box">
+    <div class="card-head">
+      <h2>Recent transactions</h2>
+      <a href="{{ url_for('history') }}">View full statement</a>
+    </div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th class="amt">Amount</th></tr></thead>
+      <tbody>
       {% for r in recent %}
       <tr>
-        <td>{{ r.ts|dt }}</td><td>{{ r.description }}</td>
+        <td class="date">{{ r.ts|dt }}</td>
+        <td><span class="txn">
+          {% if r.amount < 0 %}<span class="txn-icon out" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span><span class="sr-only">Debit: </span>
+          {% else %}<span class="txn-icon in" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span class="sr-only">Credit: </span>{% endif %}
+          {{ r.description }}</span></td>
         <td class="amt {{ 'neg' if r.amount < 0 else 'pos' }}">{{ r.amount|money }}</td>
       </tr>
+      {% else %}
+      <tr><td colspan="3" class="empty-state"><strong>No transactions yet</strong>Your recent activity will appear here.</td></tr>
       {% endfor %}
+      </tbody>
     </table>
-    <p class="note"><a href="{{ url_for('history') }}">Full statement</a></p>
+    </div>
   </div>
 </main>
 {% endblock %}

@@ -3,34 +3,66 @@
 {% block body %}
 <main class="wide">
   {% include "_flash.html" %}
-  <div class="box">
+  <div class="page-head">
     <h2>Statement</h2>
-    <form class="filters" method="get">
-      <select name="type">
-        <option value="all" {{ 'selected' if kind=='all' }}>All</option>
-        <option value="credit" {{ 'selected' if kind=='credit' }}>Money in</option>
-        <option value="debit" {{ 'selected' if kind=='debit' }}>Money out</option>
-      </select>
-      <input name="q" value="{{ q }}" placeholder="Search description">
-      <button type="submit">Filter</button>
-    </form>
+    <p>Review, search and filter your account transactions.</p>
+  </div>
+  <div class="box">
+    <div class="toolbar">
+      <form class="filters" method="get">
+        <label for="type" class="sr-only">Transaction type</label>
+        <select id="type" name="type">
+          <option value="all" {{ 'selected' if kind=='all' }}>All</option>
+          <option value="credit" {{ 'selected' if kind=='credit' }}>Money in</option>
+          <option value="debit" {{ 'selected' if kind=='debit' }}>Money out</option>
+        </select>
+        <label for="q" class="sr-only">Search description</label>
+        <input id="q" name="q" value="{{ q }}" placeholder="Search description">
+        <label for="from" class="sr-only">From date</label>
+        <input id="from" name="from" type="date" value="{{ d_from }}" class="date-input" title="From date">
+        <label for="to" class="sr-only">To date</label>
+        <input id="to" name="to" type="date" value="{{ d_to }}" class="date-input" title="To date">
+        <button type="submit">Filter</button>
+      </form>
+      <div class="btn-row export-row">
+        <a class="btn btn-secondary" href="{{ url_for('history_csv') }}">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+          Download CSV</a>
+        <a class="btn btn-secondary" href="{{ url_for('history_pdf', **base_args) }}">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6"/></svg>
+          Download PDF</a>
+      </div>
+    </div>
+    <div class="table-wrap">
     <table>
-      <tr><th>Date</th><th>Description</th><th class="amt">Amount</th><th class="amt">Balance</th></tr>
+      <thead><tr><th>Date</th><th>Description</th><th class="amt">Amount</th><th class="amt">Balance</th></tr></thead>
+      <tbody>
       {% for r in rows %}
       <tr>
-        <td>{{ r.ts|dt }}</td><td>{{ r.description }}</td>
+        <td class="date">{{ r.ts|dt }}</td>
+        <td><span class="txn">
+          {% if r.amount < 0 %}<span class="txn-icon out" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span><span class="sr-only">Debit: </span>
+          {% else %}<span class="txn-icon in" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span class="sr-only">Credit: </span>{% endif %}
+          {{ r.description }}</span>
+          {% if r.amount < 0 and r.description.startswith('Transfer to ') %}<a class="receipt-link" href="{{ url_for('receipt', tid=r.id) }}">Receipt</a>{% endif %}</td>
         <td class="amt {{ 'neg' if r.amount < 0 else 'pos' }}">{{ r.amount|money }}</td>
         <td class="amt">{{ r.balance_after|money }}</td>
       </tr>
       {% else %}
-      <tr><td colspan="4">No transactions found.</td></tr>
+      <tr><td colspan="4" class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <strong>No transactions found.</strong>Try a different search or change the filter.
+      </td></tr>
       {% endfor %}
+      </tbody>
     </table>
+    </div>
     <div class="pager">
-      {% if page > 1 %}<a href="{{ url_for('history', type=kind, q=q, page=page-1) }}">&laquo; Newer</a>{% endif %}
-      Page {{ page }} of {{ pages }}
-      {% if page < pages %}<a href="{{ url_for('history', type=kind, q=q, page=page+1) }}">Older &raquo;</a>{% endif %}
-      &nbsp;&middot;&nbsp; <a href="{{ url_for('history_csv') }}">Download CSV</a>
+      <span class="page-info">Page {{ page }} of {{ pages }}</span>
+      <div class="pager-links">
+        {% if page > 1 %}<a class="btn btn-secondary" href="{{ url_for('history', page=page-1, **base_args) }}">&laquo; Newer</a>{% endif %}
+        {% if page < pages %}<a class="btn btn-secondary" href="{{ url_for('history', page=page+1, **base_args) }}">Older &raquo;</a>{% endif %}
+      </div>
     </div>
   </div>
 </main>

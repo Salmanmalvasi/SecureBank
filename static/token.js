@@ -1,70 +1,233 @@
-// Talks to the ESP32 token over USB (Web Serial) and polls for Wi-Fi pushes.
 (function () {
-  const csrf = document.querySelector('meta[name=csrf]').content;
   const input = document.getElementById('otp');
-  const form = document.getElementById('otp-form');
   const status = document.getElementById('tokstatus');
   const connectBtn = document.getElementById('connect');
   const syncBtn = document.getElementById('sync');
+  const getOtpBtn = document.getElementById('get-otp');
+  const connectionBadge = document.getElementById('token-connection-status');
+  const clockBadge = document.getElementById('token-clock-status');
 
-  // Wi-Fi path: ask the server every 2 s whether the token pushed a code.
-  setInterval(() => {
-    fetch('/api/poll', { method: 'POST', headers: { 'X-CSRF': csrf } })
-      .then(r => r.json())
-      .then(d => { if (d.done) window.location = d.next; })
-      .catch(() => {});
-  }, 2000);
+  if (!status || !connectBtn || !syncBtn) return;
 
-  // USB path
+  let writer = null;
+  let port = null;
+  let connected = false;
+  let waitingForOtp = false;
+  let reader = null;
+
+  function setConnection(text, state) {
+    status.textContent = text;
+
+    if (connectionBadge) {
+      connectionBadge.textContent =
+        state === 'connected' ? 'Connected' :
+        state === 'disconnected' ? 'Disconnected' :
+        'Not connected';
+
+      connectionBadge.dataset.state = state;
+    }
+  }
+
+  function setClock(text, synced) {
+    if (clockBadge) {
+      clockBadge.textContent = synced
+        ? 'Synchronized'
+        : 'Needs synchronization';
+
+      clockBadge.dataset.state = synced ? 'connected' : 'warning';
+    }
+
+    if (text) status.textContent = text;
+  }
+
   if (!('serial' in navigator)) {
     connectBtn.disabled = true;
-    status.textContent = 'USB connect needs Chrome or Edge. You can still type the code.';
+
+    setConnection(
+      'USB serial requires Chrome or Edge on a supported desktop.',
+      'disconnected'
+    );
+
+    setClock('', false);
     return;
   }
-  let writer = null;
 
-  connectBtn.addEventListener('click', async () => {
+  if (getOtpBtn) getOtpBtn.disabled = true;
+  syncBtn.disabled = true;
+
+  connectBtn.addEventListener('click', async function () {
     try {
-      const port = await navigator.serial.requestPort();
+      port = await navigator.serial.requestPort();
       await port.open({ baudRate: 115200 });
-      const enc = new TextEncoderStream();
-      enc.readable.pipeTo(port.writable);
-      writer = enc.writable.getWriter();
+
+      const encoder = new TextEncoderStream();
+      encoder.readable.pipeTo(port.writable).catch(() => {});
+      writer = encoder.writable.getWriter();
+
+      connected = true;
       syncBtn.disabled = false;
+
+      if (getOtpBtn) getOtpBtn.disabled = false;
+
       connectBtn.disabled = true;
-      status.textContent = 'Token connected. Press the button on the token.';
+
+      setConnection(
+        'USB token connected. Checking device identity...',
+        'connected'
+      );
+
       readLoop(port);
-    } catch (e) {
-      status.textContent = 'Could not open the port (close the Arduino Serial Monitor first).';
+
+      await writer.write('ID\n');
+    } catch (error) {
+      connected = false;
+      writer = null;
+
+      syncBtn.disabled = true;
+
+      if (getOtpBtn) getOtpBtn.disabled = true;
+
+      connectBtn.disabled = false;
+
+      setConnection(
+        'Could not connect. Close Arduino Serial Monitor and try again.',
+        'disconnected'
+      );
     }
   });
 
-  syncBtn.addEventListener('click', () => {
-    if (writer) writer.write('T' + Math.floor(Date.now() / 1000) + '\n');
+  if (getOtpBtn) {
+    getOtpBtn.addEventListener('click', async function () {
+      if (!writer || !connected) {
+        setConnection('Connect the token first.', 'disconnected');
+        return;
+      }
+
+      try {
+        waitingForOtp = true;
+        getOtpBtn.disabled = true;
+
+        status.textContent = 'Requesting the current OTP from the token...';
+
+        await writer.write('GETOTP\n');
+      } catch (error) {
+        waitingForOtp = false;
+        getOtpBtn.disabled = false;
+
+        setConnection(
+          'Could not request an OTP. Reconnect the token and try again.',
+          'disconnected'
+        );
+      }
+    });
+  }
+
+  syncBtn.addEventListener('click', async function () {
+    if (!writer || !connected) {
+      setConnection(
+        'Connect the token before synchronizing its clock.',
+        'disconnected'
+      );
+      return;
+    }
+
+    try {
+      const unixTime = Math.floor(Date.now() / 1000);
+
+      await writer.write('T' + unixTime + '\n');
+
+      status.textContent =
+        'Clock synchronization requested. Waiting for confirmation...';
+    } catch (error) {
+      setClock(
+        'Clock synchronization failed. Reconnect the token and try again.',
+        false
+      );
+    }
   });
 
-  async function readLoop(port) {
-    const dec = new TextDecoderStream();
-    port.readable.pipeTo(dec.writable);
-    const reader = dec.readable.getReader();
-    let buf = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += value;
-      let i;
-      while ((i = buf.indexOf('\n')) >= 0) {
-        const line = buf.slice(0, i).trim();
-        buf = buf.slice(i + 1);
-        const m = line.match(/^OTP:(\d{6})$/);
-        if (m) {
-          input.value = m[1];
-          status.textContent = 'Code received from token.';
-          form.submit();
-        } else if (line.startsWith('OK')) {
-          status.textContent = 'Token says: ' + line;
+  async function readLoop(activePort) {
+    try {
+      const decoder = new TextDecoderStream();
+
+      activePort.readable.pipeTo(decoder.writable).catch(() => {});
+
+      reader = decoder.readable.getReader();
+
+      let buffer = '';
+
+      while (true) {
+        const result = await reader.read();
+
+        if (result.done) break;
+
+        buffer += result.value;
+
+        let newline;
+
+        while ((newline = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, newline).trim();
+
+          buffer = buffer.slice(newline + 1);
+
+          const match = line.match(/^OTP:(\d{6})$/);
+
+          if (match && waitingForOtp) {
+            if (input) {
+              input.value = match[1];
+              input.focus();
+            }
+
+            waitingForOtp = false;
+
+            if (getOtpBtn) getOtpBtn.disabled = false;
+
+            status.textContent = input
+              ? 'OTP received. Check the code, then confirm the action.'
+              : 'Token is connected and generating OTPs successfully.';
+
+          } else if (line.startsWith('OK TIME')) {
+            setClock('Token clock synchronized successfully.', true);
+
+          } else if (line.startsWith('OK ID')) {
+            setConnection(
+              'Token connected: ' + line.slice(3).trim(),
+              'connected'
+            );
+
+          } else if (line.startsWith('ERR')) {
+            waitingForOtp = false;
+
+            if (getOtpBtn) getOtpBtn.disabled = false;
+
+            status.textContent = 'Token reported an error: ' + line;
+          }
         }
       }
+    } catch (error) {
+      // USB disconnection may cause the read operation to fail.
+    } finally {
+      if (reader) {
+        try {
+          reader.releaseLock();
+        } catch (error) {}
+
+        reader = null;
+      }
+
+      connected = false;
+      writer = null;
+
+      syncBtn.disabled = true;
+
+      if (getOtpBtn) getOtpBtn.disabled = true;
+
+      connectBtn.disabled = false;
+
+      setConnection(
+        'USB connection interrupted. Reconnect the token to continue.',
+        'disconnected'
+      );
     }
   }
 })();

@@ -9,17 +9,43 @@
 </head>
 <body>
 <header>
-  <h1>SecureBank</h1>
+  <a class="brand" href="{{ url_for('dashboard') if session.get('user') else url_for('login') }}" aria-label="SecureBank home">
+    <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+    <h1>SecureBank</h1>
+  </a>
   {% if session.get('user') %}
-  <nav>
-    <a href="{{ url_for('dashboard') }}">Account</a>
-    <a href="{{ url_for('transfer') }}">Transfer</a>
-    <a href="{{ url_for('history') }}">Statement</a>
-    <a href="{{ url_for('security') }}">Security</a>
-    <a href="{{ url_for('logout') }}">Log out</a>
+  {% set ep = request.endpoint %}
+  <nav aria-label="Main">
+    <a href="{{ url_for('dashboard') }}" {% if ep == 'dashboard' %}aria-current="page"{% endif %}>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Account</a>
+    <a href="{{ url_for('transfer') }}" {% if ep in ('transfer', 'transfer_confirm', 'receipt') %}aria-current="page"{% endif %}>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h13l-4-4"/><path d="M17 17H4l4 4"/></svg>
+      Transfer</a>
+    <a href="{{ url_for('history') }}" {% if ep in ('history', 'history_csv', 'history_pdf') %}aria-current="page"{% endif %}>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+      Statement</a>
+    <a href="{{ url_for('beneficiaries') }}" {% if ep == 'beneficiaries' %}aria-current="page"{% endif %}>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 016-6h2a6 6 0 016 6v1M17 4a4 4 0 010 8M22 21v-1a5 5 0 00-3-4.6"/></svg>
+      Payees</a>
+    <a href="{{ url_for('security') }}" {% if ep in ('security', 'change_password') %}aria-current="page"{% endif %}>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/></svg>
+      Security</a>
+    <span class="session-timer" id="session-timer" data-seconds="{{ session_seconds }}" data-logout="{{ url_for('logout') }}" data-ping="{{ url_for('session_ping') }}" title="Time until you are signed out automatically">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span class="sr-only">Session expires in </span><span id="session-time">--:--</span>
+    </span>
+    <a class="nav-logout" href="{{ url_for('logout') }}">Log out</a>
   </nav>
   {% endif %}
 </header>
+{% if session.get('user') %}
+<div class="session-warning" id="session-warning" role="alert" hidden>
+  <span>Your session expires in <strong id="session-warn-time">1:00</strong>. Unsaved work on this page will be lost.</span>
+  <button type="button" id="session-stay">Stay signed in</button>
+</div>
+{% endif %}
 {% block body %}{% endblock %}
+{% if session.get('user') %}<script src="{{ url_for('static', filename='session.js') }}"></script>{% endif %}
 </body>
 </html>
